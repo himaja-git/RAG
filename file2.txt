@@ -1,0 +1,2 @@
+Machine learning is a subset of artificial intelligence.
+It enables computers to learn from and make predictions on data.
