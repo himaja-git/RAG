@@ -1,6 +1,6 @@
 # Lightweight Retrieval-Augmented Generation (RAG) Demo
 
-This is a simple RAG-style project implemented in Python to retrieve relevant text chunks from `.txt` documents based on user queries.
+This is a simple RAG-style project implemented in Python to retrieve relevant text chunks from `python tutorial` documents based on user queries.
 
 ## Features
 
