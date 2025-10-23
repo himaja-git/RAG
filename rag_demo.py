@@ -1,9 +1,17 @@
 import glob
 import re
+import os
 import numpy as np
 import fitz  # PyMuPDF
 from sentence_transformers import SentenceTransformer
 from sklearn.metrics.pairwise import cosine_similarity
+import openai  # OpenAI-compatible client for Groq
+
+# Set up Groq client
+client = openai.OpenAI(
+    base_url="https://api.groq.com/openai/v1",
+    api_key=os.getenv("GROQ_API_KEY"),
+)
 
 def extract_text_from_pdf(pdf_path):
     doc = fitz.open(pdf_path)
@@ -72,6 +80,19 @@ def highlight_terms(text, terms):
         text = re.sub(r'(?i)(' + re.escape(term) + r')', r'\033[1;32m\1\033[0m', text)
     return text
 
+def generate_answer_with_groq(query, context):
+    prompt = f"Answer the question based on the context below:\nQuestion: {query}\nContext: {context}\nAnswer:"
+    response = client.chat.completions.create(
+        model="llama-3.1-8b-instant",  # <-- Use a model name you have access to!
+        messages=[
+            {"role": "system", "content": "You are a helpful assistant."},
+            {"role": "user", "content": prompt}
+        ],
+        max_tokens=300,
+        temperature=0.3,
+    )
+    return response.choices[0].message.content.strip()
+
 if __name__ == "__main__":
     import argparse
     parser = argparse.ArgumentParser()
@@ -96,9 +117,20 @@ if __name__ == "__main__":
     if not relevant_chunks:
         print("No relevant chunks found. Try lowering minscore or refining your query.")
     else:
+        print("\n==== Retrieved Chunks ====\n")
         query_terms = args.ask.lower().split()
+        context_chunks = []
         for chunk, score in relevant_chunks:
-            print(f"\nScore: {score:.3f}")
+            print(f"[Score: {score:.3f}]")
             print(highlight_terms(chunk, query_terms))
+            print()
+            context_chunks.append(chunk)
+        context = "\n\n".join(context_chunks)
+
+        print("\n==== Synthesized Answer ====\n")
+        answer = generate_answer_with_groq(args.ask, context)
+        print(answer)
+
+
 
 
